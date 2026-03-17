@@ -16,6 +16,7 @@
   "license": "MIT",
   "dependencies": {
     "@shipcli/core": "file:../shipcli/packages/core",
+    "@shipcli/share": "file:../shipcli/packages/share",
     "kleur": "^4.1.5"
   }
 }

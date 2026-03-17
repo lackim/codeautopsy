@@ -1,4 +1,4 @@
-import { phase, status, success, error, fatal, fmt } from "@shipcli/core/output";
+import { phase, status, success, fatal, fmt } from "@shipcli/core/output";
 import { spinner } from "@shipcli/core/spinner";
 import { fetchRepoData, parseRepoArg } from "../lib/github.js";
 import { analyze } from "../lib/analyze.js";
@@ -38,6 +38,18 @@ export async function run(target, options) {
   }
 
   console.log(renderCertificate(report));
+
+  if (options.share) {
+    var s3 = spinner("Generating share image...").start();
+    var { share } = await import("@shipcli/share");
+    var { deathCertificateTemplate } = await import("../share/card.js");
+    var slug = `${parsed.owner}-${parsed.repo}`;
+    await share(deathCertificateTemplate, report, {
+      toolName: "codeautopsy",
+      filename: `codeautopsy-${slug}.png`,
+    });
+    s3.success({ text: "Share image generated" });
+  }
 
   if (report.status === "alive") {
     success("This project appears to be alive and well!");
