@@ -13,9 +13,13 @@
     "cli",
     "codeautopsy"
   ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
   "license": "MIT",
   "dependencies": {
     "@shipcli/core": "^0.1.0",
+    "@shipcli/landing": "^0.1.1",
     "@shipcli/share": "^0.1.0",
     "kleur": "^4.1.5"
   }
