@@ -1,57 +1,74 @@
-import { fmt, box } from "@shipcli/core/output";
+import { fmt } from "@shipcli/core/output";
 import kleur from "kleur";
+
+var WIDTH = 50;
+// eslint-disable-next-line no-control-regex
+var ANSI_RE = /\x1b\[[0-9;]*m/g;
+
+function visLen(str) {
+  return str.replace(ANSI_RE, "").length;
+}
+
+function pad(text) {
+  var need = WIDTH - visLen(text);
+  return text + (need > 0 ? " ".repeat(need) : "");
+}
+
+function row(text) {
+  return kleur.dim("  ║") + pad(text) + kleur.dim("║");
+}
 
 export function renderCertificate(report) {
   var lines = [];
+  var border = "═".repeat(WIDTH);
 
   lines.push("");
-  lines.push(kleur.dim("  ╔══════════════════════════════════════════════════╗"));
-  lines.push(kleur.dim("  ║") + kleur.bold("         DEATH CERTIFICATE           ") + kleur.dim("           ║"));
-  lines.push(kleur.dim("  ╠══════════════════════════════════════════════════╣"));
-  lines.push(kleur.dim("  ║") + `  Name:      ${fmt.bold(report.fullName)}`.padEnd(55) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + `  Born:      ${formatDate(report.createdAt)}`.padEnd(55) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + `  Died:      ${formatDate(report.lastCommit)}`.padEnd(55) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + `  Age:       ${formatAge(report.ageInDays)}`.padEnd(55) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + `  Language:  ${report.language || "Unknown"}`.padEnd(55) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + "".padEnd(55) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + `  Cause:     ${kleur.red(report.causeOfDeath)}`.padEnd(55 + 9) + kleur.dim("║")); // +9 for ANSI codes
-  lines.push(kleur.dim("  ║") + `  Status:    ${statusBadge(report.status)}`.padEnd(55 + 9) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + `  Score:     ${scoreBadge(report.score)}/100`.padEnd(55 + 9) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + "".padEnd(55) + kleur.dim("║"));
-  lines.push(kleur.dim("  ╠══════════════════════════════════════════════════╣"));
-  lines.push(kleur.dim("  ║") + kleur.bold("  Vital Signs") + "".padEnd(42) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + "".padEnd(55) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + `  Stars:          ${fmt.val(report.stars)}`.padEnd(55 + 5) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + `  Forks:          ${fmt.val(report.forks)}`.padEnd(55 + 5) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + `  Contributors:   ${fmt.val(report.totalContributors)}`.padEnd(55 + 5) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + `  Open Issues:    ${fmt.val(report.openIssuesCount)}`.padEnd(55 + 5) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + `  Unanswered:     ${fmt.val(report.unansweredIssues)}`.padEnd(55 + 5) + kleur.dim("║"));
-  lines.push(kleur.dim("  ║") + `  Last Commit:    ${fmt.dim(daysAgo(report.daysSinceLastCommit))}`.padEnd(55 + 5) + kleur.dim("║"));
+  lines.push(kleur.dim(`  ╔${border}╗`));
+  lines.push(row(kleur.bold("         DEATH CERTIFICATE           ")));
+  lines.push(kleur.dim(`  ╠${border}╣`));
+  lines.push(row(`  Name:      ${fmt.bold(report.fullName)}`));
+  lines.push(row(`  Born:      ${formatDate(report.createdAt)}`));
+  lines.push(row(`  Died:      ${formatDate(report.lastCommit)}`));
+  lines.push(row(`  Age:       ${formatAge(report.ageInDays)}`));
+  lines.push(row(`  Language:  ${report.language || "Unknown"}`));
+  lines.push(row(""));
+  lines.push(row(`  Cause:     ${kleur.red(report.causeOfDeath)}`));
+  lines.push(row(`  Status:    ${statusBadge(report.status)}`));
+  lines.push(row(`  Score:     ${scoreBadge(report.score)}/100`));
+  lines.push(row(""));
+  lines.push(kleur.dim(`  ╠${border}╣`));
+  lines.push(row(kleur.bold("  Vital Signs")));
+  lines.push(row(""));
+  lines.push(row(`  Stars:          ${fmt.val(report.stars)}`));
+  lines.push(row(`  Forks:          ${fmt.val(report.forks)}`));
+  lines.push(row(`  Contributors:   ${fmt.val(report.totalContributors)}`));
+  lines.push(row(`  Open Issues:    ${fmt.val(report.openIssuesCount)}`));
+  lines.push(row(`  Unanswered:     ${fmt.val(report.unansweredIssues)}`));
+  lines.push(row(`  Last Commit:    ${fmt.dim(daysAgo(report.daysSinceLastCommit))}`));
   if (report.daysSinceLastRelease) {
-    lines.push(kleur.dim("  ║") + `  Last Release:   ${fmt.dim(daysAgo(report.daysSinceLastRelease))}`.padEnd(55 + 5) + kleur.dim("║"));
+    lines.push(row(`  Last Release:   ${fmt.dim(daysAgo(report.daysSinceLastRelease))}`));
   }
   if (report.activityDecline > 0) {
-    lines.push(kleur.dim("  ║") + `  Activity:       ${kleur.red("↓ " + report.activityDecline + "%")} decline`.padEnd(55 + 9) + kleur.dim("║"));
+    lines.push(row(`  Activity:       ${kleur.red("↓ " + report.activityDecline + "%")} decline`));
   }
   if (report.busFactorOne) {
-    lines.push(kleur.dim("  ║") + `  Bus Factor:     ${kleur.red("1")} (${report.topContributorPct}% from one person)`.padEnd(55 + 5) + kleur.dim("║"));
+    lines.push(row(`  Bus Factor:     ${kleur.red("1")} (${report.topContributorPct}% from one person)`));
   }
-  lines.push(kleur.dim("  ║") + "".padEnd(55) + kleur.dim("║"));
+  lines.push(row(""));
 
   // Death signals
   if (report.signals.length > 0) {
-    lines.push(kleur.dim("  ╠══════════════════════════════════════════════════╣"));
-    lines.push(kleur.dim("  ║") + kleur.bold("  Death Signals") + "".padEnd(40) + kleur.dim("║"));
-    lines.push(kleur.dim("  ║") + "".padEnd(55) + kleur.dim("║"));
+    lines.push(kleur.dim(`  ╠${border}╣`));
+    lines.push(row(kleur.bold("  Death Signals")));
+    lines.push(row(""));
     for (var signal of report.signals) {
       var icon = signal.severity === "critical" ? kleur.red("✖") : kleur.yellow("⚠");
-      var text = `  ${icon} ${signal.signal}`;
-      lines.push(kleur.dim("  ║") + text.padEnd(55 + 9) + kleur.dim("║"));
+      lines.push(row(`  ${icon} ${signal.signal}`));
     }
-    lines.push(kleur.dim("  ║") + "".padEnd(55) + kleur.dim("║"));
+    lines.push(row(""));
   }
 
-  lines.push(kleur.dim("  ╚══════════════════════════════════════════════════╝"));
+  lines.push(kleur.dim(`  ╚${border}╝`));
   lines.push("");
 
   // Epitaph
