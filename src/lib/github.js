@@ -1,10 +1,11 @@
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 
 function gh(endpoint) {
   try {
-    var result = execSync(`gh api "${endpoint}" --paginate 2>/dev/null`, {
+    var result = execFileSync("gh", ["api", endpoint, "--paginate"], {
       encoding: "utf-8",
       maxBuffer: 10 * 1024 * 1024,
+      stdio: ["pipe", "pipe", "ignore"],
     });
     return JSON.parse(result);
   } catch {
@@ -14,10 +15,11 @@ function gh(endpoint) {
 
 function ghList(endpoint, perPage = 100) {
   try {
-    var result = execSync(
-      `gh api "${endpoint}?per_page=${perPage}" --paginate 2>/dev/null`,
-      { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024 }
-    );
+    var result = execFileSync("gh", ["api", `${endpoint}?per_page=${perPage}`, "--paginate"], {
+      encoding: "utf-8",
+      maxBuffer: 10 * 1024 * 1024,
+      stdio: ["pipe", "pipe", "ignore"],
+    });
     // gh --paginate concatenates JSON arrays, need to handle
     // Sometimes it returns multiple arrays concatenated
     var trimmed = result.trim();
@@ -62,6 +64,8 @@ export async function fetchRepoData(owner, repo) {
   };
 }
 
+var VALID_NAME = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/;
+
 export function parseRepoArg(target) {
   // Handle: owner/repo, github.com/owner/repo, https://github.com/owner/repo
   var cleaned = target
@@ -73,5 +77,11 @@ export function parseRepoArg(target) {
   var parts = cleaned.split("/");
   if (parts.length < 2) return null;
 
-  return { owner: parts[0], repo: parts[1] };
+  var owner = parts[0];
+  var repo = parts[1];
+
+  // Validate against GitHub's allowed characters
+  if (!VALID_NAME.test(owner) || !VALID_NAME.test(repo)) return null;
+
+  return { owner, repo };
 }
