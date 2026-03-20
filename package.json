@@ -1,24 +1,33 @@
 {
   "name": "codeautopsy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Post-mortem analysis of dead GitHub repos",
   "type": "module",
   "bin": {
-    "codeautopsy": "./src/cli.js"
+    "codeautopsy": "src/cli.js"
   },
   "files": [
     "src"
   ],
   "keywords": [
     "cli",
-    "codeautopsy"
+    "codeautopsy",
+    "github",
+    "dead-repos",
+    "post-mortem",
+    "analysis",
+    "shipcli"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lackim/codeautopsy.git"
+  },
   "scripts": {
     "test": "node --test test/*.test.js"
   },
   "license": "MIT",
   "dependencies": {
-    "@shipcli/core": "^0.1.1",
+    "@shipcli/core": "^0.1.2",
     "@shipcli/landing": "^0.1.2",
     "@shipcli/share": "^0.1.2",
     "kleur": "^4.1.5"
