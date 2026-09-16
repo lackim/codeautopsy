@@ -1,6 +1,46 @@
-var DAY_MS = 24 * 60 * 60 * 1000;
+import type { RepositoryData } from "./github.js";
 
-export function analyze(data) {
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export type SignalSeverity = "critical" | "warning";
+export type HealthStatus = "alive" | "declining" | "on life support" | "dead";
+
+export interface DeathSignal {
+  signal: string;
+  severity: SignalSeverity;
+  days?: number;
+}
+
+export interface AnalysisReport {
+  name: string;
+  fullName: string;
+  description: string | null;
+  language: string | null;
+  stars: number;
+  forks: number;
+  openIssuesCount: number;
+  createdAt: string;
+  lastCommit: string;
+  lastPush: string;
+  lastRelease: string | null;
+  ageInDays: number;
+  daysSinceLastCommit: number;
+  daysSinceLastPush: number;
+  daysSinceLastRelease: number | null;
+  totalContributors: number;
+  topContributorPct: number;
+  busFactorOne: boolean;
+  unansweredIssues: number;
+  activityDecline: number;
+  commitsByMonth: Record<string, number>;
+  signals: DeathSignal[];
+  score: number;
+  status: HealthStatus;
+  causeOfDeath: string;
+  archived: boolean;
+}
+
+export function analyze(data: RepositoryData): AnalysisReport {
   var { repo, commits, issues, contributors, releases, participation } = data;
   var now = Date.now();
 
@@ -47,7 +87,7 @@ export function analyze(data) {
   var activityDecline = olderAvg > 0 ? Math.round((1 - recentAvg / olderAvg) * 100) : 0;
 
   // --- Death signals ---
-  var signals = [];
+  var signals: DeathSignal[] = [];
 
   if (daysSinceLastCommit > 365) {
     signals.push({ signal: "No commits in over a year", severity: "critical", days: daysSinceLastCommit });
@@ -97,7 +137,7 @@ export function analyze(data) {
   var causeOfDeath = determineCauseOfDeath(signals, data);
 
   // --- Status ---
-  var status;
+  var status: HealthStatus;
   if (score >= 80) status = "alive";
   else if (score >= 50) status = "declining";
   else if (score >= 25) status = "on life support";
@@ -133,7 +173,7 @@ export function analyze(data) {
   };
 }
 
-function determineCauseOfDeath(signals, data) {
+function determineCauseOfDeath(signals: DeathSignal[], data: RepositoryData): string {
   var criticals = signals.filter((s) => s.severity === "critical");
 
   if (data.repo.archived) return "Archived by owner";
@@ -146,8 +186,8 @@ function determineCauseOfDeath(signals, data) {
   return "Slow decline";
 }
 
-function groupByMonth(dates) {
-  var months = {};
+function groupByMonth(dates: Date[]): Record<string, number> {
+  var months: Record<string, number> = {};
   for (var d of dates) {
     var key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     months[key] = (months[key] || 0) + 1;
@@ -155,7 +195,7 @@ function groupByMonth(dates) {
   return months;
 }
 
-function calculateTrend(monthlyData) {
+function calculateTrend(monthlyData: Record<string, number>): number {
   var keys = Object.keys(monthlyData).sort();
   if (keys.length < 3) return 0;
 

@@ -1,9 +1,16 @@
+import type { SatoriElement } from "@shipcli/share";
+import type { AnalysisReport } from "../lib/analyze.js";
+
 // Satori uses React.createElement-style objects: { type, props, children }
-function h(type, props, ...children) {
+function h(
+  type: string,
+  props: Record<string, unknown>,
+  ...children: Array<SatoriElement | string>
+): SatoriElement {
   return { type, props: { ...props, children: children.length === 1 ? children[0] : children } };
 }
 
-export function deathCertificateTemplate(report) {
+export function deathCertificateTemplate(report: AnalysisReport): SatoriElement {
   var statusColor = report.score >= 80 ? "#22c55e" : report.score >= 50 ? "#eab308" : "#ef4444";
   var bgColor = "#0f0f0f";
   var cardBg = "#1a1a1a";
@@ -150,7 +157,7 @@ export function deathCertificateTemplate(report) {
   );
 }
 
-function infoRow(label, value, valueColor) {
+function infoRow(label: string, value: string, valueColor: string): SatoriElement {
   return h("div", {
     style: {
       display: "flex",
@@ -167,7 +174,7 @@ function infoRow(label, value, valueColor) {
   );
 }
 
-function formatDate(iso) {
+function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
@@ -175,7 +182,7 @@ function formatDate(iso) {
   });
 }
 
-function formatAge(days) {
+function formatAge(days: number): string {
   var years = Math.floor(days / 365);
   var months = Math.floor((days % 365) / 30);
   if (years > 0) return `${years}y ${months}m`;

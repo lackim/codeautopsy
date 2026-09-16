@@ -4,27 +4,27 @@ import { parseRepoArg } from "../src/lib/github.js";
 
 describe("parseRepoArg", () => {
   it("parses owner/repo", () => {
-    var result = parseRepoArg("facebook/react");
+    const result = parseRepoArg("facebook/react");
     assert.deepEqual(result, { owner: "facebook", repo: "react" });
   });
 
   it("parses full https URL", () => {
-    var result = parseRepoArg("https://github.com/facebook/react");
+    const result = parseRepoArg("https://github.com/facebook/react");
     assert.deepEqual(result, { owner: "facebook", repo: "react" });
   });
 
   it("parses URL without protocol", () => {
-    var result = parseRepoArg("github.com/facebook/react");
+    const result = parseRepoArg("github.com/facebook/react");
     assert.deepEqual(result, { owner: "facebook", repo: "react" });
   });
 
   it("strips .git suffix", () => {
-    var result = parseRepoArg("https://github.com/facebook/react.git");
+    const result = parseRepoArg("https://github.com/facebook/react.git");
     assert.deepEqual(result, { owner: "facebook", repo: "react" });
   });
 
   it("strips trailing slash", () => {
-    var result = parseRepoArg("facebook/react/");
+    const result = parseRepoArg("facebook/react/");
     assert.deepEqual(result, { owner: "facebook", repo: "react" });
   });
 
@@ -33,7 +33,7 @@ describe("parseRepoArg", () => {
   });
 
   it("parses http URL", () => {
-    var result = parseRepoArg("http://github.com/atom/atom");
+    const result = parseRepoArg("http://github.com/atom/atom");
     assert.deepEqual(result, { owner: "atom", repo: "atom" });
   });
 
@@ -58,7 +58,7 @@ describe("parseRepoArg", () => {
   });
 
   it("allows dots and hyphens in names", () => {
-    var result = parseRepoArg("vue-js/vue.js");
+    const result = parseRepoArg("vue-js/vue.js");
     assert.deepEqual(result, { owner: "vue-js", repo: "vue.js" });
   });
 

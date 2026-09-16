@@ -20,6 +20,8 @@ Requires [GitHub CLI](https://cli.github.com/) (`gh`) to be installed and authen
 gh auth login
 ```
 
+Requires Node.js 24 or newer.
+
 ## Usage
 
 ```bash
@@ -85,7 +87,17 @@ codeautopsy atom/atom --share
 
 ## Built with
 
-[shipcli](https://github.com/lackim/shipcli) — CLI-as-a-Product toolkit
+[shipcli 0.4](https://github.com/lackim/shipcli) — CLI framework, typed project configuration, packaging, landing page, and share-card generation.
+
+## Development
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm check
+```
+
+The project is an external reference implementation for shipcli. Its product logic remains independent while CI verifies that a real consumer can build and package against the current shipcli release.
 
 ## License
 

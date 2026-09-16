@@ -1,9 +1,19 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { analyze } from "../src/lib/analyze.js";
+import type { IssueInfo, RepositoryData, RepositoryInfo } from "../src/lib/github.js";
 
-function makeRepo(overrides = {}) {
-  var now = new Date();
+interface RepositoryDataOverrides {
+  repo?: Partial<RepositoryInfo>;
+  commits?: RepositoryData["commits"];
+  issues?: RepositoryData["issues"];
+  contributors?: RepositoryData["contributors"];
+  releases?: RepositoryData["releases"];
+  participation?: RepositoryData["participation"];
+}
+
+function makeRepo(overrides: RepositoryDataOverrides = {}): RepositoryData {
+  const now = new Date();
   return {
     repo: {
       owner: { login: "test" },
@@ -13,7 +23,7 @@ function makeRepo(overrides = {}) {
       language: "JavaScript",
       stargazers_count: 100,
       forks_count: 20,
-      created_at: new Date(now - 365 * 2 * 24 * 60 * 60 * 1000).toISOString(),
+      created_at: new Date(now.getTime() - 365 * 2 * 24 * 60 * 60 * 1000).toISOString(),
       pushed_at: now.toISOString(),
       archived: false,
       ...overrides.repo,
@@ -81,7 +91,7 @@ describe("analyze", () => {
   });
 
   it("many unanswered issues = warning/critical", () => {
-    var issues = Array.from({ length: 25 }, (_, i) => ({
+    const issues: IssueInfo[] = Array.from({ length: 25 }, () => ({
       state: "open",
       comments: 0,
       created_at: new Date(Date.now() - 500 * 24 * 60 * 60 * 1000).toISOString(),

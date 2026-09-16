@@ -1,26 +1,27 @@
 import { fmt } from "@shipcli/core/output";
 import kleur from "kleur";
+import type { AnalysisReport, HealthStatus } from "./analyze.js";
 
-var WIDTH = 50;
+const WIDTH = 50;
 // eslint-disable-next-line no-control-regex
-var ANSI_RE = /\x1b\[[0-9;]*m/g;
+const ANSI_RE = /\x1b\[[0-9;]*m/g;
 
-function visLen(str) {
+function visLen(str: string): number {
   return str.replace(ANSI_RE, "").length;
 }
 
-function pad(text) {
+function pad(text: string): string {
   var need = WIDTH - visLen(text);
   return text + (need > 0 ? " ".repeat(need) : "");
 }
 
-function row(text) {
+function row(text: string): string {
   return kleur.dim("  ║") + pad(text) + kleur.dim("║");
 }
 
-export function renderCertificate(report) {
-  var lines = [];
-  var border = "═".repeat(WIDTH);
+export function renderCertificate(report: AnalysisReport): string {
+  const lines: string[] = [];
+  const border = "═".repeat(WIDTH);
 
   lines.push("");
   lines.push(kleur.dim(`  ╔${border}╗`));
@@ -80,7 +81,7 @@ export function renderCertificate(report) {
   return lines.join("\n");
 }
 
-function formatDate(iso) {
+function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -88,21 +89,21 @@ function formatDate(iso) {
   });
 }
 
-function formatAge(days) {
+function formatAge(days: number): string {
   var years = Math.floor(days / 365);
   var months = Math.floor((days % 365) / 30);
   if (years > 0) return `${years}y ${months}m`;
   return `${months}m`;
 }
 
-function daysAgo(days) {
+function daysAgo(days: number): string {
   if (days < 30) return `${days} days ago`;
   if (days < 365) return `${Math.floor(days / 30)} months ago`;
   return `${Math.floor(days / 365)}y ${Math.floor((days % 365) / 30)}m ago`;
 }
 
-function statusBadge(status) {
-  var colors = {
+function statusBadge(status: HealthStatus): string {
+  const colors: Record<HealthStatus, (text: string) => string> = {
     alive: kleur.green,
     declining: kleur.yellow,
     "on life support": kleur.red,
@@ -111,7 +112,7 @@ function statusBadge(status) {
   return (colors[status] || kleur.white)(status.toUpperCase());
 }
 
-function scoreBadge(score) {
+function scoreBadge(score: number): string {
   if (score >= 80) return kleur.green(String(score));
   if (score >= 50) return kleur.yellow(String(score));
   return kleur.red(String(score));
