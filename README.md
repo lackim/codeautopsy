@@ -2,7 +2,23 @@
 
 Post-mortem analysis of dead GitHub repos. Find out if an open-source project is alive, declining, or dead — and why.
 
-[Website](https://lackim.github.io/codeautopsy/) · [npm](https://www.npmjs.com/package/codeautopsy)
+[Website](https://lackim.github.io/codeautopsy/) · [npm](https://www.npmjs.com/package/codeautopsy) · [Privacy](https://lackim.github.io/codeautopsy/privacy/) · [Terms](https://lackim.github.io/codeautopsy/terms/)
+
+## Requirements
+
+- Node.js 24 or newer
+- [GitHub CLI](https://cli.github.com/) (`gh`)
+- An authenticated GitHub CLI session
+
+Check which GitHub account and scopes are currently active before running an analysis:
+
+```bash
+gh auth status
+```
+
+If needed, authenticate with `gh auth login`. codeautopsy uses the active GitHub CLI
+credentials and therefore inherits their repository access. Analysis runs locally;
+repository data is not sent to a codeautopsy service.
 
 ## Quick Start
 
@@ -15,14 +31,6 @@ npx codeautopsy atom/atom
 ```bash
 npm install -g codeautopsy
 ```
-
-Requires [GitHub CLI](https://cli.github.com/) (`gh`) to be installed and authenticated:
-
-```bash
-gh auth login
-```
-
-Requires Node.js 24 or newer.
 
 ## Usage
 
@@ -89,7 +97,7 @@ codeautopsy atom/atom --share
 
 ## Built with
 
-[shipcli 0.4](https://github.com/lackim/shipcli) — CLI framework, typed project configuration, packaging, landing page, and share-card generation.
+[shipcli 0.5](https://github.com/lackim/shipcli) — CLI framework, typed project configuration, packaging, privacy-friendly legal pages, landing page, and share-card generation.
 
 ## Development
 
