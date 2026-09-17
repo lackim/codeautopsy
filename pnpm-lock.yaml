@@ -9,18 +9,18 @@ importers:
   .:
     dependencies:
       '@shipcli/core':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0
       '@shipcli/share':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0
       kleur:
         specifier: ^4.1.5
         version: 4.1.5
     devDependencies:
       '@shipcli/cli':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.5
@@ -528,25 +528,25 @@ packages:
     resolution: {integrity: sha512-xBaJish5OeGmniDj9cW5PRa/PtmuVU3ziqrbr5xJj901ZDN4TosrVaNZpEiLZAxdfnhAe7uQ7QFWfjPe9d9K2Q==}
     engines: {node: '>= 10'}
 
-  '@shipcli/build@0.4.0':
-    resolution: {integrity: sha512-4gQjBcSB386dRF4SIXl6MDWUhR8akyKoSoXFF8xbdjV6vXuk1ep0U4aQYJVBsXPVD9QWdhAtlJ6DvtYcHOKulA==}
+  '@shipcli/build@0.5.0':
+    resolution: {integrity: sha512-Dmmd5YG3Zm0gjTmG5s1nyir9/YvpX9io7XNSWS+TgCCFr56MgVth2LJcpkhgHxMTy71l3msSJ1ZToIENCM+Y4A==}
     engines: {node: '>=24'}
 
-  '@shipcli/cli@0.4.0':
-    resolution: {integrity: sha512-KyeLJw0wMmMxv8nF2uJFc1t0OfW7m5xFwQc3LlzZ/H6M8JULQjhZ5/izVVyupMMtftehWv9LfIW3Fyx+FrJmFg==}
+  '@shipcli/cli@0.5.0':
+    resolution: {integrity: sha512-f26mZuL/N4VBFndcwY+UlHODJr67/8sOuntRR3VKE/IXFjIL3YRAfhbT4xnZxKj//oc6Fm+/mgqb25T6M97LAA==}
     engines: {node: '>=24'}
     hasBin: true
 
-  '@shipcli/core@0.4.0':
-    resolution: {integrity: sha512-0YzTG/fuSsIiUwp2b3ENctKY1BkOMRLFkT/o+4TeQiuFXJ5vuPxH8QmhSYIiNejNvWAx9iXl2PUH7/c2FQKmqw==}
+  '@shipcli/core@0.5.0':
+    resolution: {integrity: sha512-F087yVXdbtTxMeBq4z94L8hEyookkDa1sgCkVQmr/hzUF5zrrvGZOulpKriBLQPgOqRxK0vl4ngSTg4/QhQ/8w==}
     engines: {node: '>=24'}
 
-  '@shipcli/landing@0.4.0':
-    resolution: {integrity: sha512-wbF10BxXMSFaGrc+SXQcdXVfbHPmJllqsc48hAubduCSvmaH1L/Kim8OIjzCzygw7cfxrrl7KQmx9l0INIpqHA==}
+  '@shipcli/landing@0.5.0':
+    resolution: {integrity: sha512-rY6UYC/PdfoiRHOamR1RBZdYiNvAlrg2rzqMbf9QcEOrpePAc9Ja0gipZdRx056hKTqod+95IOHWZaFxcQSNYg==}
     engines: {node: '>=24'}
 
-  '@shipcli/share@0.4.0':
-    resolution: {integrity: sha512-aK2WxKdwYM0A6TeYk4IHuHNpUiIOSxt6fAwGVJt/Sk+xE9kI8w3ZhQmMaRbdxbhtlQEdGYLOP0FSezDTUPLwhA==}
+  '@shipcli/share@0.5.0':
+    resolution: {integrity: sha512-jlDgg/MKf504/OeaGEAGmq4gG5i/SIBbKjvrZTltQc1R57Y01vI1esTaCJCmO4wSLURAq59hEIOMyAZ8n1yR7Q==}
     engines: {node: '>=24'}
 
   '@shuding/opentype.js@1.4.0-beta.0':
@@ -1344,32 +1344,32 @@ snapshots:
       '@resvg/resvg-js-win32-ia32-msvc': 2.6.2
       '@resvg/resvg-js-win32-x64-msvc': 2.6.2
 
-  '@shipcli/build@0.4.0':
+  '@shipcli/build@0.5.0':
     dependencies:
-      '@shipcli/core': 0.4.0
+      '@shipcli/core': 0.5.0
 
-  '@shipcli/cli@0.4.0':
+  '@shipcli/cli@0.5.0':
     dependencies:
-      '@shipcli/build': 0.4.0
-      '@shipcli/core': 0.4.0
-      '@shipcli/landing': 0.4.0
-      '@shipcli/share': 0.4.0
+      '@shipcli/build': 0.5.0
+      '@shipcli/core': 0.5.0
+      '@shipcli/landing': 0.5.0
+      '@shipcli/share': 0.5.0
 
-  '@shipcli/core@0.4.0':
+  '@shipcli/core@0.5.0':
     dependencies:
       commander: 13.1.0
       kleur: 4.1.5
       nanospinner: 1.2.2
 
-  '@shipcli/landing@0.4.0':
+  '@shipcli/landing@0.5.0':
     dependencies:
-      '@shipcli/core': 0.4.0
+      '@shipcli/core': 0.5.0
 
-  '@shipcli/share@0.4.0':
+  '@shipcli/share@0.5.0':
     dependencies:
       '@fontsource/inter': 5.3.0
       '@resvg/resvg-js': 2.6.2
-      '@shipcli/core': 0.4.0
+      '@shipcli/core': 0.5.0
       satori: 0.25.0
 
   '@shuding/opentype.js@1.4.0-beta.0':
