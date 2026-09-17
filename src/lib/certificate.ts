@@ -19,6 +19,37 @@ function row(text: string): string {
   return kleur.dim("  ║") + pad(text) + kleur.dim("║");
 }
 
+function wrapText(text: string, width: number): string[] {
+  const words = text.trim().split(/\s+/);
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    if (word.length > width) {
+      if (current) {
+        lines.push(current);
+        current = "";
+      }
+      for (let start = 0; start < word.length; start += width) {
+        const chunk = word.slice(start, start + width);
+        if (chunk.length === width) lines.push(chunk);
+        else current = chunk;
+      }
+      continue;
+    }
+
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length <= width) current = candidate;
+    else {
+      lines.push(current);
+      current = word;
+    }
+  }
+
+  if (current) lines.push(current);
+  return lines.length > 0 ? lines : [""];
+}
+
 export function renderCertificate(report: AnalysisReport): string {
   const lines: string[] = [];
   const border = "═".repeat(WIDTH);
@@ -64,7 +95,11 @@ export function renderCertificate(report: AnalysisReport): string {
     lines.push(row(""));
     for (var signal of report.signals) {
       var icon = signal.severity === "critical" ? kleur.red("✖") : kleur.yellow("⚠");
-      lines.push(row(`  ${icon} ${signal.signal}`));
+      const wrappedSignal = wrapText(signal.signal, WIDTH - 4);
+      lines.push(row(`  ${icon} ${wrappedSignal[0]}`));
+      for (const continuation of wrappedSignal.slice(1)) {
+        lines.push(row(`    ${continuation}`));
+      }
     }
     lines.push(row(""));
   }
