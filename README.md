@@ -2,6 +2,8 @@
 
 Post-mortem analysis of dead GitHub repos. Find out if an open-source project is alive, declining, or dead — and why.
 
+[Website](https://lackim.github.io/codeautopsy/) · [npm](https://www.npmjs.com/package/codeautopsy)
+
 ## Quick Start
 
 ```bash

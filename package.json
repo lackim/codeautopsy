@@ -23,6 +23,10 @@
     "type": "git",
     "url": "git+https://github.com/lackim/codeautopsy.git"
   },
+  "homepage": "https://lackim.github.io/codeautopsy/",
+  "bugs": {
+    "url": "https://github.com/lackim/codeautopsy/issues"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node scripts/set-executable.mjs",
     "check": "pnpm typecheck && pnpm test && pnpm build && pnpm web:build",
