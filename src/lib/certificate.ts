@@ -53,18 +53,19 @@ function wrapText(text: string, width: number): string[] {
 export function renderCertificate(report: AnalysisReport): string {
   const lines: string[] = [];
   const border = "═".repeat(WIDTH);
+  const isDead = report.status === "dead";
 
   lines.push("");
   lines.push(kleur.dim(`  ╔${border}╗`));
-  lines.push(row(kleur.bold("         DEATH CERTIFICATE           ")));
+  lines.push(row(kleur.bold(isDead ? "         DEATH CERTIFICATE           " : "      REPOSITORY HEALTH REPORT         ")));
   lines.push(kleur.dim(`  ╠${border}╣`));
   lines.push(row(`  Name:      ${fmt.bold(report.fullName)}`));
   lines.push(row(`  Born:      ${formatDate(report.createdAt)}`));
-  lines.push(row(`  Died:      ${formatDate(report.lastCommit)}`));
-  lines.push(row(`  Age:       ${formatAge(report.ageInDays)}`));
+  lines.push(row(`  ${isDead ? "Died" : "Last Commit"}: ${formatDate(report.lastCommit)}`));
+  lines.push(row(`  ${isDead ? "Lifespan" : "Age"}:  ${formatAge(isDead ? report.lifespanInDays : report.ageInDays)}`));
   lines.push(row(`  Language:  ${report.language || "Unknown"}`));
   lines.push(row(""));
-  lines.push(row(`  Cause:     ${kleur.red(report.causeOfDeath)}`));
+  lines.push(row(`  ${isDead ? "Cause" : "Condition"}: ${isDead ? kleur.red(report.causeOfDeath) : report.causeOfDeath}`));
   lines.push(row(`  Status:    ${statusBadge(report.status)}`));
   lines.push(row(`  Score:     ${scoreBadge(report.score)}/100`));
   lines.push(row(""));

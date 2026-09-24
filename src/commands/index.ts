@@ -24,7 +24,16 @@ export async function run(target: string | undefined, options: RunOptions): Prom
   phase(`Performing autopsy on ${fmt.app(parsed.owner + "/" + parsed.repo)}`);
 
   const fetchSpinner = spinner("Fetching repository data...").start();
-  const data = await fetchRepoData(parsed.owner, parsed.repo);
+  let data: Awaited<ReturnType<typeof fetchRepoData>>;
+  try {
+    data = await fetchRepoData(parsed.owner, parsed.repo);
+  } catch {
+    fetchSpinner.error({ text: "Could not fetch complete repository data" });
+    fatal(
+      "GitHub API request failed before the analysis was complete.",
+      "Check your network and GitHub CLI session, then try again. Run: gh auth status",
+    );
+  }
 
   if (!data) {
     fetchSpinner.error({ text: "Repository not found" });

@@ -1,4 +1,8 @@
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
+
+const PAGE_SIZE = 100;
+const MAX_PAGES = 5;
+const GH_TIMEOUT_MS = 20_000;
 
 export interface RepositoryInfo {
   owner: { login: string };
@@ -46,65 +50,80 @@ export interface RepositoryData {
   participation: ParticipationInfo | null;
 }
 
+export interface GitHubClient {
+  get<T>(endpoint: string): Promise<T | null>;
+}
+
 export interface ParsedRepository {
   owner: string;
   repo: string;
 }
 
-function gh<T>(endpoint: string): T | null {
-  try {
-    const result = execFileSync("gh", ["api", endpoint, "--paginate"], {
-      encoding: "utf-8",
-      maxBuffer: 10 * 1024 * 1024,
-      stdio: ["pipe", "pipe", "ignore"],
-    });
-    return JSON.parse(result) as T;
-  } catch {
-    return null;
-  }
+function gh<T>(endpoint: string): Promise<T | null> {
+  return new Promise((resolve) => {
+    execFile(
+      "gh",
+      ["api", endpoint],
+      {
+        encoding: "utf-8",
+        // GitHub issue payloads can include large bodies. Pagination keeps the
+        // total bounded, while a generous per-page buffer avoids false failures.
+        maxBuffer: 10 * 1024 * 1024,
+        timeout: GH_TIMEOUT_MS,
+        windowsHide: true,
+      },
+      (error, stdout) => {
+        if (error) {
+          resolve(null);
+          return;
+        }
+
+        try {
+          resolve(JSON.parse(stdout) as T);
+        } catch {
+          resolve(null);
+        }
+      },
+    );
+  });
 }
 
-function ghList<T>(endpoint: string, perPage = 100): T[] {
-  try {
-    const separator = endpoint.includes("?") ? "&" : "?";
-    const result = execFileSync("gh", ["api", `${endpoint}${separator}per_page=${perPage}`, "--paginate"], {
-      encoding: "utf-8",
-      maxBuffer: 10 * 1024 * 1024,
-      stdio: ["pipe", "pipe", "ignore"],
-    });
-    // gh --paginate concatenates JSON arrays, need to handle
-    // Sometimes it returns multiple arrays concatenated
-    const trimmed = result.trim();
-    if (trimmed.startsWith("[")) {
-      // Could be multiple arrays concatenated: ][
-      const fixed = "[" + trimmed.replace(/\]\s*\[/g, ",") + "]";
-      // If it was already a single array, the outer [] will double-wrap
-      const parsed = JSON.parse(fixed) as T[][];
-      // Flatten if double-wrapped
-      if (parsed.length === 1 && Array.isArray(parsed[0])) return parsed[0];
-      // If it was multiple arrays merged, flatten
-      return parsed.flat();
-    }
-    return JSON.parse(trimmed) as T[];
-  } catch {
-    return [];
+async function ghList<T>(client: GitHubClient, endpoint: string, maxPages = MAX_PAGES): Promise<T[]> {
+  const items: T[] = [];
+  const separator = endpoint.includes("?") ? "&" : "?";
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    const result = await client.get<T[]>(
+      `${endpoint}${separator}per_page=${PAGE_SIZE}&page=${page}`,
+    );
+    if (!result) throw new Error(`GitHub API request failed: ${endpoint}`);
+
+    items.push(...result);
+    if (result.length < PAGE_SIZE) break;
   }
+
+  return items;
 }
 
-export async function fetchRepoData(owner: string, repo: string): Promise<RepositoryData | null> {
-  const repoInfo = gh<RepositoryInfo>(`repos/${owner}/${repo}`);
+const defaultClient: GitHubClient = { get: gh };
+
+export async function fetchRepoData(
+  owner: string,
+  repo: string,
+  client: GitHubClient = defaultClient,
+): Promise<RepositoryData | null> {
+  const repoInfo = await client.get<RepositoryInfo>(`repos/${owner}/${repo}`);
   if (!repoInfo) return null;
 
-  // Fetch in parallel using Promise.all with sync calls wrapped
-  const [commits, issues, contributors, releases] = await Promise.all([
-    Promise.resolve(ghList<CommitInfo>(`repos/${owner}/${repo}/commits`)),
-    Promise.resolve(ghList<IssueInfo>(`repos/${owner}/${repo}/issues?state=all`)),
-    Promise.resolve(ghList<ContributorInfo>(`repos/${owner}/${repo}/contributors`)),
-    Promise.resolve(ghList<ReleaseInfo>(`repos/${owner}/${repo}/releases`)),
+  // Run independent collections concurrently and cap each one so large repositories
+  // remain responsive instead of downloading their complete history.
+  const [commits, issues, contributors, releases, participation] = await Promise.all([
+    ghList<CommitInfo>(client, `repos/${owner}/${repo}/commits`),
+    ghList<IssueInfo>(client, `repos/${owner}/${repo}/issues?state=open`),
+    ghList<ContributorInfo>(client, `repos/${owner}/${repo}/contributors`),
+    ghList<ReleaseInfo>(client, `repos/${owner}/${repo}/releases`, 1),
+    client.get<ParticipationInfo>(`repos/${owner}/${repo}/stats/participation`),
   ]);
-
-  // Get recent commit activity (last year, weekly)
-  const participation = gh<ParticipationInfo>(`repos/${owner}/${repo}/stats/participation`);
 
   return {
     repo: repoInfo,

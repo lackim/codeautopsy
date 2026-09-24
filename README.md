@@ -41,7 +41,7 @@ codeautopsy <owner/repo>
 # Full URL also works
 codeautopsy https://github.com/atom/atom
 
-# Generate a shareable death certificate image (PNG)
+# Generate a shareable health/death report image (PNG)
 codeautopsy atom/atom --share
 
 # Get raw JSON output
@@ -65,6 +65,10 @@ codeautopsy examines multiple health signals to determine if a project is alive 
 | No release in 1+ year | Warning |
 | Declining commit trend | Warning |
 
+To keep analysis predictable on very large repositories, detailed commit, open-issue,
+and contributor collections are capped at 500 records. The year-over-year activity
+signal uses GitHub's 52-week participation statistics.
+
 ## Health Score
 
 Each repository gets a health score from 0 to 100:
@@ -73,6 +77,9 @@ Each repository gets a health score from 0 to 100:
 - **50-79** — Declining
 - **25-49** — On life support
 - **0-24** — Dead
+
+Archived repositories are treated as explicitly retired and their score is capped at
+20, so the reported status is always **Dead**.
 
 ## Cause of Death
 
@@ -84,11 +91,12 @@ Based on the signals detected, codeautopsy determines the cause:
 - **Maintainer disappeared** — No commits + unanswered issues
 - **Development ceased** — No commits for extended period
 - **Slow decline** — Multiple warning signals
-- **Still breathing** — No significant signals detected
+- **Still breathing** — The repository remains healthy enough to be classified as alive
 
 ## Share
 
-Use `--share` to generate a PNG death certificate card, perfect for sharing on X/LinkedIn:
+Use `--share` to generate a PNG report card. Active repositories receive a health
+report; dead repositories receive a death certificate:
 
 ```bash
 codeautopsy atom/atom --share

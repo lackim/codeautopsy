@@ -53,7 +53,8 @@ describe("analyze", () => {
     var data = makeRepo({ repo: { archived: true } });
     var report = analyze(data);
     assert.ok(report.signals.some((s) => s.signal === "Repository is archived"));
-    assert.ok(report.score < 80);
+    assert.ok(report.score <= 20);
+    assert.equal(report.status, "dead");
     assert.equal(report.causeOfDeath, "Archived by owner");
   });
 
@@ -88,6 +89,36 @@ describe("analyze", () => {
     var report = analyze(data);
     assert.ok(report.busFactorOne);
     assert.ok(report.signals.some((s) => s.signal.includes("Bus factor 1")));
+    assert.equal(report.status, "alive");
+    assert.equal(report.causeOfDeath, "Still breathing");
+  });
+
+  it("calculates a repository lifespan independently from its current age", () => {
+    var created = new Date("2020-01-01T00:00:00.000Z");
+    var lastCommit = new Date("2022-01-01T00:00:00.000Z");
+    var data = makeRepo({
+      repo: { created_at: created.toISOString(), archived: true },
+      commits: [{ commit: { author: { date: lastCommit.toISOString() } } }],
+    });
+    var report = analyze(data);
+
+    assert.equal(report.lifespanInDays, 731);
+    assert.ok(report.ageInDays > report.lifespanInDays);
+  });
+
+  it("attributes a declining single-maintainer project to maintainer burnout", () => {
+    var old = new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString();
+    var data = makeRepo({
+      repo: { pushed_at: old },
+      commits: [{ commit: { author: { date: old } } }],
+      contributors: [
+        { login: "alice", contributions: 99 },
+        { login: "bob", contributions: 1 },
+      ],
+    });
+    var report = analyze(data);
+
+    assert.equal(report.causeOfDeath, "Sole maintainer burnout");
   });
 
   it("many unanswered issues = warning/critical", () => {
@@ -130,6 +161,7 @@ describe("analyze", () => {
     assert.ok("stars" in report);
     assert.ok("forks" in report);
     assert.ok("daysSinceLastCommit" in report);
+    assert.ok("lifespanInDays" in report);
     assert.ok("commitsByMonth" in report);
   });
 

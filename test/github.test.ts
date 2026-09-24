@@ -1,6 +1,11 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { parseRepoArg } from "../src/lib/github.js";
+import {
+  fetchRepoData,
+  parseRepoArg,
+  type GitHubClient,
+  type RepositoryInfo,
+} from "../src/lib/github.js";
 
 describe("parseRepoArg", () => {
   it("parses owner/repo", () => {
@@ -65,5 +70,54 @@ describe("parseRepoArg", () => {
   it("rejects names starting with dot or hyphen", () => {
     assert.equal(parseRepoArg(".hidden/repo"), null);
     assert.equal(parseRepoArg("owner/-repo"), null);
+  });
+});
+
+describe("fetchRepoData", () => {
+  it("fetches independent collections concurrently and caps pagination", async () => {
+    const calls: string[] = [];
+    let activeRequests = 0;
+    let maxActiveRequests = 0;
+    const now = new Date().toISOString();
+    const repo: RepositoryInfo = {
+      owner: { login: "example" },
+      name: "project",
+      full_name: "example/project",
+      description: "Example",
+      language: "TypeScript",
+      stargazers_count: 1,
+      forks_count: 0,
+      created_at: now,
+      pushed_at: now,
+      archived: false,
+    };
+
+    const client: GitHubClient = {
+      async get<T>(endpoint: string): Promise<T | null> {
+        calls.push(endpoint);
+        activeRequests += 1;
+        maxActiveRequests = Math.max(maxActiveRequests, activeRequests);
+        await new Promise((resolve) => setTimeout(resolve, 1));
+
+        let value: unknown;
+        if (endpoint === "repos/example/project") value = repo;
+        else if (endpoint.endsWith("stats/participation")) value = { all: new Array(52).fill(1) };
+        else if (endpoint.includes("/commits?")) {
+          value = Array.from({ length: 100 }, () => ({ commit: { author: { date: now } } }));
+        } else value = [];
+
+        activeRequests -= 1;
+        return value as T;
+      },
+    };
+
+    const data = await fetchRepoData("example", "project", client);
+
+    assert.ok(data);
+    assert.equal(data.commits.length, 500);
+    assert.ok(calls.some((endpoint) => endpoint.includes("/commits?per_page=100&page=5")));
+    assert.ok(!calls.some((endpoint) => endpoint.includes("page=6")));
+    assert.ok(calls.some((endpoint) => endpoint.includes("/issues?state=open&per_page=100&page=1")));
+    assert.ok(maxActiveRequests >= 5, `Expected parallel requests, observed ${maxActiveRequests}`);
   });
 });

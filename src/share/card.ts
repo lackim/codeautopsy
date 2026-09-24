@@ -12,6 +12,7 @@ function h(
 
 export function deathCertificateTemplate(report: AnalysisReport): SatoriElement {
   var statusColor = report.score >= 80 ? "#22c55e" : report.score >= 50 ? "#eab308" : "#ef4444";
+  var isDead = report.status === "dead";
   var bgColor = "#0f0f0f";
   var cardBg = "#1a1a1a";
   var border = "#333";
@@ -53,7 +54,7 @@ export function deathCertificateTemplate(report: AnalysisReport): SatoriElement 
             textTransform: "uppercase",
             marginBottom: "8px",
           },
-        }, "DEATH CERTIFICATE"),
+        }, isDead ? "DEATH CERTIFICATE" : "REPOSITORY HEALTH REPORT"),
         h("div", {
           style: {
             fontSize: "42px",
@@ -111,11 +112,11 @@ export function deathCertificateTemplate(report: AnalysisReport): SatoriElement 
           gap: "16px",
         },
       },
-        infoRow("Cause of Death", report.causeOfDeath, "#ef4444"),
+        infoRow(isDead ? "Cause of Death" : "Condition", report.causeOfDeath, isDead ? "#ef4444" : statusColor),
         infoRow("Status", report.status.toUpperCase(), statusColor),
         infoRow("Born", formatDate(report.createdAt), textMain),
-        infoRow("Died", formatDate(report.lastCommit), textMain),
-        infoRow("Age", formatAge(report.ageInDays), textMain),
+        infoRow(isDead ? "Died" : "Last Commit", formatDate(report.lastCommit), textMain),
+        infoRow(isDead ? "Lifespan" : "Age", formatAge(isDead ? report.lifespanInDays : report.ageInDays), textMain),
         infoRow("Language", report.language || "Unknown", textMain),
       ),
       // Right column

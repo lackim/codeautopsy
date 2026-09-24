@@ -24,6 +24,7 @@ export interface AnalysisReport {
   lastPush: string;
   lastRelease: string | null;
   ageInDays: number;
+  lifespanInDays: number;
   daysSinceLastCommit: number;
   daysSinceLastPush: number;
   daysSinceLastRelease: number | null;
@@ -48,10 +49,11 @@ export function analyze(data: RepositoryData): AnalysisReport {
   var createdAt = new Date(repo.created_at);
   var lastPush = new Date(repo.pushed_at);
   var daysSinceLastPush = Math.floor((now - lastPush.getTime()) / DAY_MS);
-  var ageInDays = Math.floor((now - createdAt.getTime()) / DAY_MS);
 
   var lastCommitDate = commits.length > 0 ? new Date(commits[0].commit.author.date) : lastPush;
   var daysSinceLastCommit = Math.floor((now - lastCommitDate.getTime()) / DAY_MS);
+  var ageInDays = Math.max(0, Math.floor((now - createdAt.getTime()) / DAY_MS));
+  var lifespanInDays = Math.max(0, Math.floor((lastCommitDate.getTime() - createdAt.getTime()) / DAY_MS));
 
   // --- Commit activity ---
   var commitDates = commits.map((c) => new Date(c.commit.author.date));
@@ -60,10 +62,9 @@ export function analyze(data: RepositoryData): AnalysisReport {
 
   // --- Issues ---
   var openIssues = issues.filter((i) => i.state === "open" && !i.pull_request);
-  var closedIssues = issues.filter((i) => i.state === "closed" && !i.pull_request);
   var unansweredIssues = openIssues.filter((i) => i.comments === 0);
   var oldestUnanswered = unansweredIssues.length > 0
-    ? Math.floor((now - new Date(unansweredIssues[unansweredIssues.length - 1].created_at).getTime()) / DAY_MS)
+    ? Math.max(...unansweredIssues.map((issue) => Math.floor((now - new Date(issue.created_at).getTime()) / DAY_MS)))
     : 0;
 
   // --- Contributors ---
@@ -96,7 +97,7 @@ export function analyze(data: RepositoryData): AnalysisReport {
   }
 
   if (unansweredIssues.length > 5) {
-    signals.push({ signal: `${unansweredIssues.length} unanswered issues`, severity: unansweredIssues.length > 20 ? "critical" : "warning" });
+    signals.push({ signal: `${unansweredIssues.length} unanswered issues`, severity: unansweredIssues.length >= 20 ? "critical" : "warning" });
   }
 
   if (oldestUnanswered > 365) {
@@ -133,8 +134,9 @@ export function analyze(data: RepositoryData): AnalysisReport {
   }
   score = Math.max(0, Math.min(100, score));
 
-  // --- Cause of death ---
-  var causeOfDeath = determineCauseOfDeath(signals, data);
+  // An archived repository is explicitly read-only. Treat it as retired/dead
+  // even when it has too few additional signals to cross the generic threshold.
+  if (repo.archived) score = Math.min(score, 20);
 
   // --- Status ---
   var status: HealthStatus;
@@ -142,6 +144,9 @@ export function analyze(data: RepositoryData): AnalysisReport {
   else if (score >= 50) status = "declining";
   else if (score >= 25) status = "on life support";
   else status = "dead";
+
+  // --- Cause of death / current condition ---
+  var causeOfDeath = determineCauseOfDeath(signals, data, status);
 
   return {
     name: `${repo.owner.login}/${repo.name}`,
@@ -156,6 +161,7 @@ export function analyze(data: RepositoryData): AnalysisReport {
     lastPush: lastPush.toISOString(),
     lastRelease: lastRelease ? lastRelease.toISOString() : null,
     ageInDays,
+    lifespanInDays,
     daysSinceLastCommit,
     daysSinceLastPush,
     daysSinceLastRelease,
@@ -173,11 +179,17 @@ export function analyze(data: RepositoryData): AnalysisReport {
   };
 }
 
-function determineCauseOfDeath(signals: DeathSignal[], data: RepositoryData): string {
+function determineCauseOfDeath(
+  signals: DeathSignal[],
+  data: RepositoryData,
+  status: HealthStatus,
+): string {
   var criticals = signals.filter((s) => s.severity === "critical");
+  var hasBusFactorOne = signals.some((s) => s.signal.includes("Bus factor 1"));
 
+  if (status === "alive") return "Still breathing";
   if (data.repo.archived) return "Archived by owner";
-  if (criticals.find((s) => s.signal.includes("Bus factor"))) return "Sole maintainer burnout";
+  if (hasBusFactorOne && criticals.length > 0) return "Sole maintainer burnout";
   if (criticals.find((s) => s.signal.includes("Activity declined"))) return "Gradual abandonment";
   if (criticals.find((s) => s.signal.includes("unanswered issues")) && criticals.find((s) => s.signal.includes("No commits"))) return "Maintainer disappeared";
   if (criticals.find((s) => s.signal.includes("No commits"))) return "Development ceased";

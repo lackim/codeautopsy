@@ -19,6 +19,7 @@ function makeReport(signal: string): AnalysisReport {
     lastPush: "2025-12-01T00:00:00.000Z",
     lastRelease: null,
     ageInDays: 334,
+    lifespanInDays: 334,
     daysSinceLastCommit: 10,
     daysSinceLastPush: 10,
     daysSinceLastRelease: null,
@@ -52,5 +53,32 @@ describe("renderCertificate", () => {
       assert.equal(line.length, 54, `Misaligned certificate row: ${line}`);
     }
     assert.match(output.replace(ANSI_RE, ""), /\n  ║    commits\s+║/);
+  });
+
+  it("uses health-report wording while a repository is still alive", () => {
+    const report = makeReport("Bus factor 1");
+    report.status = "alive";
+    report.causeOfDeath = "Still breathing";
+    report.score = 90;
+
+    const output = renderCertificate(report).replace(ANSI_RE, "");
+    assert.match(output, /REPOSITORY HEALTH REPORT/);
+    assert.match(output, /Last Commit:/);
+    assert.match(output, /Condition: Still breathing/);
+    assert.doesNotMatch(output, /Died:/);
+  });
+
+  it("uses death-certificate wording for archived repositories", () => {
+    const report = makeReport("Repository is archived");
+    report.status = "dead";
+    report.causeOfDeath = "Archived by owner";
+    report.score = 20;
+    report.archived = true;
+
+    const output = renderCertificate(report).replace(ANSI_RE, "");
+    assert.match(output, /DEATH CERTIFICATE/);
+    assert.match(output, /Died:/);
+    assert.match(output, /Lifespan:/);
+    assert.match(output, /Cause: Archived by owner/);
   });
 });
