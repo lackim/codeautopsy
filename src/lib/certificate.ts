@@ -5,6 +5,13 @@ import type { AnalysisReport, HealthStatus } from "./analyze.js";
 const WIDTH = 50;
 // eslint-disable-next-line no-control-regex
 const ANSI_RE = /\x1b\[[0-9;]*m/g;
+// Repository metadata is untrusted terminal input. Remove C0/C1 controls,
+// including ESC and OSC terminators, before it reaches the user's terminal.
+const TERMINAL_CONTROL_RE = /[\u0000-\u001f\u007f-\u009f]/g;
+
+function safeTerminalText(value: string): string {
+  return value.replace(TERMINAL_CONTROL_RE, " ").replace(/\s+/g, " ").trim();
+}
 
 function visLen(str: string): number {
   return str.replace(ANSI_RE, "").length;
@@ -59,11 +66,11 @@ export function renderCertificate(report: AnalysisReport): string {
   lines.push(kleur.dim(`  ╔${border}╗`));
   lines.push(row(kleur.bold(isDead ? "         DEATH CERTIFICATE           " : "      REPOSITORY HEALTH REPORT         ")));
   lines.push(kleur.dim(`  ╠${border}╣`));
-  lines.push(row(`  Name:      ${fmt.bold(report.fullName)}`));
+  lines.push(row(`  Name:      ${fmt.bold(safeTerminalText(report.fullName))}`));
   lines.push(row(`  Born:      ${formatDate(report.createdAt)}`));
   lines.push(row(`  ${isDead ? "Died" : "Last Commit"}: ${formatDate(report.lastCommit)}`));
   lines.push(row(`  ${isDead ? "Lifespan" : "Age"}:  ${formatAge(isDead ? report.lifespanInDays : report.ageInDays)}`));
-  lines.push(row(`  Language:  ${report.language || "Unknown"}`));
+  lines.push(row(`  Language:  ${safeTerminalText(report.language || "Unknown")}`));
   lines.push(row(""));
   lines.push(row(`  ${isDead ? "Cause" : "Condition"}: ${isDead ? kleur.red(report.causeOfDeath) : report.causeOfDeath}`));
   lines.push(row(`  Status:    ${statusBadge(report.status)}`));
@@ -96,7 +103,7 @@ export function renderCertificate(report: AnalysisReport): string {
     lines.push(row(""));
     for (var signal of report.signals) {
       var icon = signal.severity === "critical" ? kleur.red("✖") : kleur.yellow("⚠");
-      const wrappedSignal = wrapText(signal.signal, WIDTH - 4);
+      const wrappedSignal = wrapText(safeTerminalText(signal.signal), WIDTH - 4);
       lines.push(row(`  ${icon} ${wrappedSignal[0]}`));
       for (const continuation of wrappedSignal.slice(1)) {
         lines.push(row(`    ${continuation}`));
@@ -110,7 +117,7 @@ export function renderCertificate(report: AnalysisReport): string {
 
   // Epitaph
   if (report.description) {
-    lines.push(kleur.dim(`  "${report.description}"`));
+    lines.push(kleur.dim(`  "${safeTerminalText(report.description)}"`));
     lines.push("");
   }
 

@@ -81,4 +81,19 @@ describe("renderCertificate", () => {
     assert.match(output, /Lifespan:/);
     assert.match(output, /Cause: Archived by owner/);
   });
+
+  it("strips terminal control sequences from repository metadata", () => {
+    const report = makeReport("Unexpected\n\x1b]52;c;copied\x07activity");
+    report.fullName = "owner/\x1b[31mrepo";
+    report.language = "TypeScript\rspoofed";
+    report.description = "Legitimate\n\x1b]2;fake title\x07description";
+
+    const output = renderCertificate(report).replace(ANSI_RE, "");
+
+    // eslint-disable-next-line no-control-regex
+    assert.doesNotMatch(output, /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/);
+    assert.match(output, /owner\/ \[31mrepo/);
+    assert.match(output, /TypeScript spoofed/);
+    assert.match(output, /Legitimate \]2;fake title description/);
+  });
 });
